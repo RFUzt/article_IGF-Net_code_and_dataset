@@ -1,0 +1,71 @@
+seed: 42
+device: "cuda:0"
+output_dir: "dataset0/main_model"       # Please change to your storage path.
+
+model:
+  name: "igf-net"
+  in_channels: 14
+  num_classes: 1
+  apply_sigmoid: true
+
+
+data:
+  train:
+    name: "npyseg"
+    params:
+      img_dir: "train/MULT"                    # Please change the dataset path.
+      mask_dir: "train/LABEL"
+      mode: "all"
+      img_size: 128                            # Please change the image size.
+      augment_name: "basic_train"
+
+  val:
+    name: "npyseg"
+    params:
+      img_dir: "test/MULT"                     # Please change the dataset path.
+      mask_dir: "test/LABEL"
+      mode: "all"
+      img_size: 128
+      augment_name: "basic_val"
+
+  test:
+    name: "npyseg"
+    params:
+      img_dir: "test/MULT"                     # Please change the dataset path.
+      mask_dir: null
+      mode: "all"
+      img_size: 128
+      augment_name: "basic_val"
+
+train:
+  epochs: 100
+  batch_size: 8
+  num_workers: 4
+  loss: "bce"
+
+val:
+  batch_size: 8
+  num_workers: 4
+
+optim:
+  name: "adamw"
+  lr: 0.0005
+  weight_decay: 0.0001
+
+sched:
+  name: "cosine"
+
+infer:
+  threshold: 0.5
+  checkpoint: "main_model/best.pth"
+  save_dir: "main_model/infer"
+  suffix: ".tif"
+
+eval:
+  pred_dir: "main_model/infer"
+  mask_dir: "test/LABEL"
+  suffix: ".tif"
+  log_path: "main_model/eval.txt"
+  num_classes: 1
+  threshold: 0.5
+  expect_logits: false
