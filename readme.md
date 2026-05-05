@@ -1,2 +1,1 @@
-
-The code and datasets will be uploaded after the publication of the paper, please look forward to it.
+Zhao T, Hou C, Zhang Z, Zhou Z. An Intelligent Gated Fusion Network for Waterbody Recognition in Multispectral Remote Sensing Imagery. Remote Sensing. 2026; 18(7):1088. https://doi.org/10.3390/rs18071088
