@@ -104,35 +104,40 @@ class IntelligentGateFusion(nn.Module):
 
     def forward(self, x, y):
         B, C, H, W = x.shape
-        assert y.shape == x.shape, "x and y must have the same shape"
 
-        xy   = x * y
+        assert y.shape == x.shape, "x 与 y 的形状需一致"
+
+        xy = x * y
         diff = (x - y).abs()
-        s = torch.cat([xy, diff], dim=1)
+        s = torch.stack((xy, diff), dim=2).flatten(1, 2)
 
-        logits = self.head(s).view(B, 2, C, H, W)
+        logits = self.head(s).view(B, C, 2, H, W)
+        logits = logits.permute(0, 2, 1, 3, 4).contiguous()
 
         if self.use_channel_prior:
-            g_xy   = F.adaptive_avg_pool2d(xy, 1).view(B, C)
+            g_xy = F.adaptive_avg_pool2d(xy, 1).view(B, C)
             g_diff = F.adaptive_avg_pool2d(diff, 1).view(B, C)
             g = torch.cat([g_xy, g_diff], dim=1)
             prior = self.prior_mlp(g).view(B, 2, C, 1, 1)
             logits = logits + prior
+
 
         tau_logits = self.tau_head(s)
         tau = torch.sigmoid(tau_logits)
         tau = self.t_min + (self.t_max - self.t_min) * tau
 
         logits_scaled = logits / tau.unsqueeze(1)
+
         weights = torch.softmax(logits_scaled, dim=1)
-        w_x = weights[:, 0, ...]
-        w_y = weights[:, 1, ...]
+        w_x = weights[:, 0]
+        w_y = weights[:, 1]
 
         fused = w_x * x + w_y * y
 
         if self.use_refine:
             fused = self.refine(fused)
-        out = fused + self.gamma * (x + y) * 0.5
+        out = fused + self.gamma * 0.5 * (x + y)
+
         return out
 
 
